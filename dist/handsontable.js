@@ -7,7 +7,7 @@
  * Licensed under the MIT license.
  * http://handsontable.com/
  *
- * Date: Thu Mar 19 2015 15:05:12 GMT+0100 (CET)
+ * Date: Fri Mar 27 2015 16:35:59 GMT+0000 (GMT)
  */
 /*jslint white: true, browser: true, plusplus: true, indent: 4, maxerr: 50 */
 
@@ -11404,6 +11404,12 @@ function HandsontableColumnSorting() {
 
   };
 
+  function offsetIndex(delIndices, physicalIndex) {
+    return delIndices.filter(function(el){
+      return el < physicalIndex;
+    }).length;
+  }
+
   this.afterRemoveRow = function(index, amount){
     var instance = this;
 
@@ -11411,13 +11417,13 @@ function HandsontableColumnSorting() {
       return;
     }
 
-    var physicalRemovedIndex = plugin.translateRow.call(instance, index);
-
-    instance.sortIndex.splice(index, amount);
+    var delSortIndices = instance.sortIndex.splice(index, amount);
+    var delIndices = delSortIndices.map(function(el){ return el[0]; });
+    var minDelIndex = Math.min(delIndices);
 
     for(var i = 0; i < instance.sortIndex.length; i++){
-
-      if (instance.sortIndex[i][0] > physicalRemovedIndex){
+      if (instance.sortIndex[i][0] > minDelIndex){
+        var amount = offsetIndex(delIndices, instance.sortIndex[i][0]);
         instance.sortIndex[i][0] -= amount;
       }
     }
