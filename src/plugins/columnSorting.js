@@ -307,7 +307,7 @@ function HandsontableColumnSorting() {
 
     var delSortIndices = instance.sortIndex.splice(index, amount);
     var delIndices = delSortIndices.map(function(el){ return el[0]; });
-    var minDelIndex = Math.min(delIndices);
+    var minDelIndex = Math.min.apply(null, delIndices);
 
     for(var i = 0; i < instance.sortIndex.length; i++){
       if (instance.sortIndex[i][0] > minDelIndex){
@@ -317,7 +317,6 @@ function HandsontableColumnSorting() {
     }
 
     saveSortingState.call(instance);
-
   };
 
   this.afterChangeSort = function (changes/*, source*/) {
