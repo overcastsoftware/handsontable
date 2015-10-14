@@ -1,39 +1,38 @@
 
-if(!window.Handsontable){
-  var Handsontable = {};
-}
+import {polymerWrap, closest} from './helpers/dom/element';
+import {isWebComponentSupportedNatively} from './helpers/browser';
 
-Handsontable.countEventManagerListeners = 0; //used to debug memory leaks
+/**
+ * Event DOM manager for internal use in Handsontable.
+ *
+ * @class EventManager
+ * @private
+ * @util
+ */
+class EventManager {
+  /**
+   * @param {Object} [context=null]
+   */
+  constructor(context = null) {
+    this.context = context || this;
 
-Handsontable.eventManager = function (instance) {
-  var
-    addEvent,
-    removeEvent,
-    clearEvents,
-    fireEvent;
-
-  if (!instance) {
-    throw new Error ('instance not defined');
-  }
-  if (!instance.eventListeners) {
-    instance.eventListeners = [];
+    if (!this.context.eventListeners) {
+      this.context.eventListeners = [];
+    }
   }
 
   /**
-   * Add Event
+   * Add event
    *
    * @param {Element} element
-   * @param {String} event
+   * @param {String} eventName
    * @param {Function} callback
    * @returns {Function} Returns function which you can easily call to remove that event
    */
-  addEvent = function (element, event, callback) {
-    var callbackProxy;
+  addEventListener(element, eventName, callback) {
+    let context = this.context;
 
-    callbackProxy = function callbackProxy(event) {
-      var isHotTableSpotted = false,
-        target, len;
-
+    function callbackProxy(event) {
       if (event.target == void 0 && event.srcElement != void 0) {
         if (event.definePoperty) {
           event.definePoperty('target', {
@@ -51,122 +50,110 @@ Handsontable.eventManager = function (instance) {
             }
           });
         } else {
-          event.preventDefault = function () {
+          event.preventDefault = function() {
             this.returnValue = false;
           };
         }
       }
-      event.isTargetWebComponent = false;
+      event = extendEvent(context, event);
 
-      if (Handsontable.eventManager.isHotTableEnv) {
-        event = typeof wrap === 'undefined' ? event : wrap(event);
-        len = event.path ? event.path.length : 0;
-
-        while (len --) {
-          if (event.path[len].nodeName === 'HOT-TABLE') {
-            isHotTableSpotted = true;
-
-          } else if (isHotTableSpotted && event.path[len].shadowRoot) {
-            target = event.path[len];
-          }
-          if (len === 0 && !target) {
-            target = event.path[len];
-          }
-        }
-        if (!target) {
-          target = event.target;
-        }
-        event.isTargetWebComponent = true;
-
-        Object.defineProperty(event, 'target', {
-          get: function() {
-            // Wrap element into polymer/webcomponent container if exists
-            return typeof wrap === 'undefined' ? target : wrap(target);
-          },
-          enumerable: true,
-          configurable: true
-        });
-      }
+      /* jshint validthis:true */
       callback.call(this, event);
-    };
-
-    instance.eventListeners.push({
+    }
+    this.context.eventListeners.push({
       element: element,
-      event: event,
+      event: eventName,
       callback: callback,
-      callbackProxy: callbackProxy
+      callbackProxy: callbackProxy,
     });
 
     if (window.addEventListener) {
-      element.addEventListener(event, callbackProxy, false);
+      element.addEventListener(eventName, callbackProxy, false);
     } else {
-      element.attachEvent('on' + event, callbackProxy);
+      element.attachEvent('on' + eventName, callbackProxy);
     }
-    Handsontable.countEventManagerListeners ++;
+    Handsontable.countEventManagerListeners++;
 
-    return function _removeEvent() {
-      removeEvent(element, event, callback);
+    return () => {
+      this.removeEventListener(element, eventName, callback);
     };
-  };
+  }
 
   /**
    * Remove event
    *
    * @param {Element} element
-   * @param {String} event
+   * @param {String} eventName
    * @param {Function} callback
    */
-  removeEvent = function (element, event, callback) {
-    var len = instance.eventListeners.length,
-      tmpEvent;
+  removeEventListener(element, eventName, callback) {
+    let len = this.context.eventListeners.length;
+    let tmpEvent;
 
     while (len--) {
-      tmpEvent = instance.eventListeners[len];
+      tmpEvent = this.context.eventListeners[len];
 
-      if (tmpEvent.event == event && tmpEvent.element == element) {
+      if (tmpEvent.event == eventName && tmpEvent.element == element) {
         if (callback && callback != tmpEvent.callback) {
           continue;
         }
-        instance.eventListeners.splice(len, 1);
+        this.context.eventListeners.splice(len, 1);
 
         if (tmpEvent.element.removeEventListener) {
           tmpEvent.element.removeEventListener(tmpEvent.event, tmpEvent.callbackProxy, false);
         } else {
           tmpEvent.element.detachEvent('on' + tmpEvent.event, tmpEvent.callbackProxy);
         }
-        Handsontable.countEventManagerListeners --;
+        Handsontable.countEventManagerListeners--;
       }
     }
-  };
+  }
+
+  /**
+   * Clear all events
+   *
+   * @since 0.15.0-beta3
+   */
+  clearEvents() {
+    if (!this.context) {
+      return;
+    }
+    let len = this.context.eventListeners.length;
+
+    while (len--) {
+      let event = this.context.eventListeners[len];
+
+      if (event) {
+        this.removeEventListener(event.element, event.event, event.callback);
+      }
+    }
+  }
 
   /**
    * Clear all events
    */
-  clearEvents = function () {
-    var len = instance.eventListeners.length,
-      event;
+  clear() {
+    this.clearEvents();
+  }
 
-    while (len--) {
-      event = instance.eventListeners[len];
-
-      if (event) {
-        removeEvent(event.element, event.event, event.callback);
-      }
-    }
-  };
+  /**
+   * Destroy instance
+   */
+  destroy() {
+    this.clearEvents();
+    this.context = null;
+  }
 
   /**
    * Trigger event
    *
    * @param {Element} element
-   * @param {String} type
+   * @param {String} eventName
    */
-  fireEvent = function (element, type) {
-    var options, event;
-
-    options = {
+  fireEvent(element, eventName) {
+    let options = {
       bubbles: true,
-      cancelable: (type !== "mousemove"),
+      cancelable: (eventName !== 'mousemove'),
       view: window,
       detail: 0,
       screenX: 0,
@@ -178,12 +165,13 @@ Handsontable.eventManager = function (instance) {
       shiftKey: false,
       metaKey: false,
       button: 0,
-      relatedTarget: undefined
+      relatedTarget: undefined,
     };
+    var event;
 
     if (document.createEvent) {
-      event = document.createEvent("MouseEvents");
-      event.initMouseEvent(type, options.bubbles, options.cancelable,
+      event = document.createEvent('MouseEvents');
+      event.initMouseEvent(eventName, options.bubbles, options.cancelable,
         options.view, options.detail,
         options.screenX, options.screenY, options.clientX, options.clientY,
         options.ctrlKey, options.altKey, options.shiftKey, options.metaKey,
@@ -196,14 +184,92 @@ Handsontable.eventManager = function (instance) {
     if (element.dispatchEvent) {
       element.dispatchEvent(event);
     } else {
-      element.fireEvent('on' + type, event);
+      element.fireEvent('on' + eventName, event);
     }
-  };
+  }
+}
 
-  return {
-    addEventListener: addEvent,
-    removeEventListener: removeEvent,
-    clear: clearEvents,
-    fireEvent: fireEvent
-  };
-};
+/**
+ * @param {Object} context
+ * @param {Event} event
+ * @private
+ * @returns {*}
+ */
+function extendEvent(context, event) {
+  let componentName = 'HOT-TABLE';
+  let isHotTableSpotted;
+  let fromElement;
+  let realTarget;
+  let target;
+  let len;
+
+  event.isTargetWebComponent = false;
+  event.realTarget = event.target;
+
+  if (!Handsontable.eventManager.isHotTableEnv) {
+    return event;
+  }
+  event = polymerWrap(event);
+  len = event.path ? event.path.length : 0;
+
+  while (len--) {
+    if (event.path[len].nodeName === componentName) {
+      isHotTableSpotted = true;
+
+    } else if (isHotTableSpotted && event.path[len].shadowRoot) {
+      target = event.path[len];
+
+      break;
+    }
+    if (len === 0 && !target) {
+      target = event.path[len];
+    }
+  }
+  if (!target) {
+    target = event.target;
+  }
+  event.isTargetWebComponent = true;
+
+  if (isWebComponentSupportedNatively()) {
+    event.realTarget = event.srcElement || event.toElement;
+
+  } else if (context instanceof Handsontable.Core || context instanceof Walkontable) {
+    // Polymer doesn't support `event.target` property properly we must emulate it ourselves
+    if (context instanceof Handsontable.Core) {
+      fromElement = context.view ? context.view.wt.wtTable.TABLE : null;
+
+    } else if (context instanceof Walkontable) {
+      // .wtHider
+      fromElement = context.wtTable.TABLE.parentNode.parentNode;
+    }
+    realTarget = closest(event.target, [componentName], fromElement);
+
+    if (realTarget) {
+      event.realTarget = fromElement.querySelector(componentName) || event.target;
+    } else {
+      event.realTarget = event.target;
+    }
+  }
+
+  Object.defineProperty(event, 'target', {
+    get: function() {
+      return polymerWrap(target);
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
+  return event;
+}
+
+export {EventManager, eventManager};
+
+window.Handsontable = window.Handsontable || {};
+// used to debug memory leaks
+Handsontable.countEventManagerListeners = 0;
+// support for older versions of Handsontable, deprecated
+Handsontable.eventManager = eventManager;
+
+function eventManager(context) {
+  return new EventManager(context);
+}

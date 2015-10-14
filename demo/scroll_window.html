@@ -7,8 +7,12 @@
   <!--
   Loading Handsontable (full distribution that includes all dependencies)
   -->
-  <script data-jsfiddle="common" src="../dist/handsontable.full.js"></script>
-  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/handsontable.full.css">
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/handsontable.css">
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/pikaday/pikaday.css">
+  <script data-jsfiddle="common" src="../dist/pikaday/pikaday.js"></script>
+  <script data-jsfiddle="common" src="../dist/moment/moment.js"></script>
+  <script data-jsfiddle="common" src="../dist/zeroclipboard/ZeroClipboard.js"></script>
+  <script data-jsfiddle="common" src="../dist/handsontable.js"></script>
 
   <!--
   Loading demo dependencies. They are used here only to enhance the examples on this page
@@ -57,7 +61,7 @@
         <div class="pad" data-jsfiddle="example1">
           <h2>Native Scrollbar (window)</h2>
 
-          <p>This demo shows table of <strong>1000</strong> rows and columns. Only visible part is rendered. Native window scrollbar is used to
+          <p>This demo shows table of <strong>300</strong> rows and columns. Only visible part is rendered. Native window scrollbar is used to
             scroll through the table.</p>
 
           <div id="example1"></div>
@@ -84,7 +88,7 @@
               hot1;
 
             hot1 = new Handsontable(container1, {
-              data: Handsontable.helper.createSpreadsheetData(1000, 1000),
+              data: Handsontable.helper.createSpreadsheetData(300, 300),
               colWidths: [55, 47, 47, 47, 47, 47], // can also be a number or a function
               rowHeaders: true,
               colHeaders: true,

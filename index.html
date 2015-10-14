@@ -125,9 +125,6 @@
           <li>
             <a href="demo/custom_borders.html">Custom borders</a>
           </li>
-          <li>
-            <a href="demo/grouping.html">Column &amp; row grouping <sup>BETA</sup></a>
-          </li>
         </ul>
       </li>
 
@@ -178,6 +175,9 @@
           </li>
           <li>
             <a href="demo/contextmenucopypaste.html"> &#x2514; Copy/Paste in Context menu</a>
+          </li>
+          <li>
+            <a href="demo/dropdownmenu.html">Dropdown menu <sup>NEW (PRO)</sup></a>
           </li>
           <li>
             <a href="demo/comments.html">Comments <sup>BETA</sup></a>
@@ -277,18 +277,16 @@
 
           <div class="warning">
             This is Handsontable <a href="https://github.com/handsontable/handsontable/releases" class="ver"></a>, a
-            release published on March 9th, 2015.
+            release published on May 21st, 2015.
 
             <p>The most prominent changes are:</p>
 
             <ul>
-              <li>more efficient row and column rendering algorithm,</li>
-              <li>the removal of jQuery from dependencies and the filename,</li>
-              <li>(but we still keep <a href="demo/jquery.html">the jQuery plugin API</a> for backward compatibility),
-              </li>
-              <li>removal of jQuery UI Datepicker</li>
-              <li>dropped support for IE 8 and 9 (if it bothers you, please email us),</li>
-              <li>basic iPad 4 support</li>
+              <li>modified fixed header/overlay structure - each overlay has its own hidden scrollbar - change was made to reduce the laggy overlay effect for IE and Safari,<br><br>
+              <strong>Please note:</strong> In order to maintain the pre-0.14.0 scrollbar functionality, change the CSS <code>overflow</code> property of your Handsontable container from <code>scroll</code>
+              or <code>auto</code> to <code>hidden</code>. Without performing this change, you might encounter problems with doubling scrollbars.</li><br>
+              <li>Adding JSDoc to the project,</li>
+              <li>Removal of jQuery UI datepicker - we switched to Pikaday + Moment.js, that makes us jQuery-free</li>
             </ul>
 
             Check out the <a href="https://github.com/handsontable/handsontable/releases/latest/">full release

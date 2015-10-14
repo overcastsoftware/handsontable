@@ -7,8 +7,12 @@
   <!--
   Loading Handsontable (full distribution that includes all dependencies)
   -->
-  <script data-jsfiddle="common" src="../dist/handsontable.full.js"></script>
-  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/handsontable.full.css">
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/handsontable.css">
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/pikaday/pikaday.css">
+  <script data-jsfiddle="common" src="../dist/pikaday/pikaday.js"></script>
+  <script data-jsfiddle="common" src="../dist/moment/moment.js"></script>
+  <script data-jsfiddle="common" src="../dist/zeroclipboard/ZeroClipboard.js"></script>
+  <script data-jsfiddle="common" src="../dist/handsontable.js"></script>
 
   <!--
   Loading demo dependencies. They are used here only to enhance the examples on this page
@@ -119,7 +123,7 @@
 
           <p><strong>Presidents of USA</strong></p>
 
-          <div id="example1" style="width: 600px; height: 300px; overflow: scroll"></div>
+          <div id="example1" style="width: 600px; height: 300px; overflow: hidden;"></div>
 
           <p>
             <button name="dump" data-dump="#example1" data-instance="hot" title="Prints current data source to Firebug/Chrome Dev Tools">
@@ -158,6 +162,8 @@
               ],
               manualColumnMove: true,
               manualColumnResize: true,
+              manualRowMove: true,
+              manualRowResize: true,
               minSpareRows: 1,
               contextMenu: true,
               persistentState: true

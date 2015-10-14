@@ -7,8 +7,13 @@
   <!--
   Loading Handsontable (full distribution that includes all dependencies)
   -->
-  <script data-jsfiddle="common" src="../dist/handsontable.full.js"></script>
-  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/handsontable.full.css">
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/handsontable.css">
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/pikaday/pikaday.css">
+  <script data-jsfiddle="common" src="../dist/pikaday/pikaday.js"></script>
+  <script data-jsfiddle="common" src="../dist/moment/moment.js"></script>
+  <script data-jsfiddle="common" src="../dist/zeroclipboard/ZeroClipboard.js"></script>
+  <script data-jsfiddle="common" src="../dist/handsontable.js"></script>
+
   <script data-jsfiddle="common" src="../plugins/removeRow/handsontable.removeRow.js"></script>
   <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../plugins/removeRow/handsontable.removeRow.css">
 
@@ -71,7 +76,7 @@
             <label><input type="checkbox" id="colHeaders" checked="checked" autocomplete="off"> Show col headers</label>
           </p>
 
-          <div id="example1" style="width: 400px; height: 300px; overflow: scroll"></div>
+          <div id="example1" style="width: 400px; height: 300px; overflow: hidden;"></div>
 
           <p>
             <button name="dump" data-dump="#example1" data-instance="hot" title="Prints current data source to Firebug/Chrome Dev Tools">

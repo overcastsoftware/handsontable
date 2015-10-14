@@ -435,6 +435,52 @@ describe('Core_validate', function () {
     });
   });
 
+  it('should call callback with first argument as `true` if all cells are valid', function () {
+    var onValidate = jasmine.createSpy('onValidate');
+    var onAfterValidate = jasmine.createSpy('onAfterValidate');
+
+    var hot = handsontable({
+      data: Handsontable.helper.createSpreadsheetData(2, 2),
+      validator: function(value, callback) {
+        callback(true);
+      },
+      afterValidate: onAfterValidate
+    });
+
+    hot.validateCells(onValidate);
+
+    waitsFor(function () {
+      return onAfterValidate.calls.length > 0;
+    }, 'Cell validation', 1000);
+
+    runs(function () {
+      expect(onValidate).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it('should call callback with first argument as `false` if one of cells is invalid', function () {
+    var onValidate = jasmine.createSpy('onValidate');
+    var onAfterValidate = jasmine.createSpy('onAfterValidate');
+
+    var hot = handsontable({
+      data: Handsontable.helper.createSpreadsheetData(2, 2),
+      validator: function(value, callback) {
+        callback(false);
+      },
+      afterValidate: onAfterValidate
+    });
+
+    hot.validateCells(onValidate);
+
+    waitsFor(function () {
+      return onAfterValidate.calls.length > 0;
+    }, 'Cell validation', 1000);
+
+    runs(function () {
+      expect(onValidate).toHaveBeenCalledWith(false);
+    });
+  });
+
   it('should not allow for changes where data is invalid (multiple changes, async)', function () {
     var validatedChanges;
 
@@ -1188,10 +1234,10 @@ describe('Core_validate', function () {
     keyDownUp('enter'); //should be accepted but only after 100 ms
     expect(getSelected()).toEqual([3, 2, 3, 2]);
 
-    this.$container.simulate('keydown', {keyCode: Handsontable.helper.keyCode.ARROW_LEFT});
-    this.$container.simulate('keyup', {keyCode: Handsontable.helper.keyCode.ARROW_LEFT});
-    this.$container.simulate('keydown', {keyCode: Handsontable.helper.keyCode.ARROW_LEFT});
-    this.$container.simulate('keyup', {keyCode: Handsontable.helper.keyCode.ARROW_LEFT});
+    this.$container.simulate('keydown', {keyCode: Handsontable.helper.KEY_CODES.ARROW_LEFT});
+    this.$container.simulate('keyup', {keyCode: Handsontable.helper.KEY_CODES.ARROW_LEFT});
+    this.$container.simulate('keydown', {keyCode: Handsontable.helper.KEY_CODES.ARROW_LEFT});
+    this.$container.simulate('keyup', {keyCode: Handsontable.helper.KEY_CODES.ARROW_LEFT});
 
     expect(isEditorVisible()).toBe(true);
     expect(getSelected()).toEqual([3, 0, 3, 0]);
@@ -1220,8 +1266,8 @@ describe('Core_validate', function () {
     });
 
     selectCell(0, 0);
-    keyDownUp(Handsontable.helper.keyCode.ENTER);  //open editor
-    keyDownUp(Handsontable.helper.keyCode.ESCAPE); //cancel editing
+    keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  //open editor
+    keyDownUp(Handsontable.helper.KEY_CODES.ESCAPE); //cancel editing
 
     waits(100);
 
@@ -1257,8 +1303,8 @@ describe('Core_validate', function () {
       expect(getCellMeta(0, 0).valid).toBe(false);
 
       selectCell(0, 0);
-      keyDownUp(Handsontable.helper.keyCode.ENTER);  //open editor
-      keyDownUp(Handsontable.helper.keyCode.ESCAPE); //cancel editing
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  //open editor
+      keyDownUp(Handsontable.helper.KEY_CODES.ESCAPE); //cancel editing
 
       expect(getCellMeta(0, 0).valid).toBe(false);
 
@@ -1292,9 +1338,9 @@ describe('Core_validate', function () {
     expect(activeEditor.row).toEqual(0);
     expect(activeEditor.col).toEqual(0);
 
-    keyDownUp(Handsontable.helper.keyCode.ENTER); //open editor
+    keyDownUp(Handsontable.helper.KEY_CODES.ENTER); //open editor
     activeEditor.setValue('foo');
-    keyDownUp(Handsontable.helper.keyCode.ENTER); //save changes, close editor
+    keyDownUp(Handsontable.helper.KEY_CODES.ENTER); //save changes, close editor
 
     waitsFor(function () {
       return onAfterValidate.calls.length > 0
@@ -1310,7 +1356,7 @@ describe('Core_validate', function () {
 
       activeEditor.setValue(2);
 
-      keyDownUp(Handsontable.helper.keyCode.ENTER);  //save changes and move to cell below (row: 1, col: ś0)
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  //save changes and move to cell below (row: 1, col: ś0)
 
     });
 
@@ -1319,7 +1365,7 @@ describe('Core_validate', function () {
     }, 'cell validation 2', 1000);
 
     runs(function () {
-      keyDownUp(Handsontable.helper.keyCode.ENTER);  //open editor
+      keyDownUp(Handsontable.helper.KEY_CODES.ENTER);  //open editor
 
       activeEditor = hot.getActiveEditor();
       expect(activeEditor.row).toEqual(1);

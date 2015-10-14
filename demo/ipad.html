@@ -7,8 +7,12 @@
   <!--
   Loading Handsontable (full distribution that includes all dependencies apart from jQuery)
   -->
-  <script data-jsfiddle="common" src="../dist/handsontable.full.js"></script>
-  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/handsontable.full.css">
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/handsontable.css">
+  <link data-jsfiddle="common" rel="stylesheet" media="screen" href="../dist/pikaday/pikaday.css">
+  <script data-jsfiddle="common" src="../dist/pikaday/pikaday.js"></script>
+  <script data-jsfiddle="common" src="../dist/moment/moment.js"></script>
+  <script data-jsfiddle="common" src="../dist/zeroclipboard/ZeroClipboard.js"></script>
+  <script data-jsfiddle="common" src="../dist/handsontable.js"></script>
 
   <!--
   Loading demo dependencies. They are used here only to enhance the examples on this page
@@ -59,7 +63,7 @@
               <p>Mobile editor and selecting modes are enabled automatically if you're viewing Handsontable on a mobile device.<BR>
               This mode was developed using iPad 4, and currently it's the only device we support.</p>
 
-              <div id="example1" style="width: 500px; height: 300px; overflow: scroll"></div>
+              <div id="example1" style="width: 500px; height: 300px; overflow: hidden;"></div>
             </div>
           </div>
 

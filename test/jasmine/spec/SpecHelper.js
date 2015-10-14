@@ -50,6 +50,10 @@ var getLeftClone = function () {
   return spec().$container.find('.ht_clone_left');
 };
 
+var getCornerClone = function () {
+  return spec().$container.find('.ht_clone_top_left_corner');
+};
+
 //Rename me to countTD
 var countCells = function () {
   return getHtCore().find('tbody td').length;
@@ -76,7 +80,7 @@ var getCorrespondingOverlay = function (cell, container) {
 /**
  * Shows context menu
  */
-var contextMenu = function () {
+var contextMenu = function (cell) {
   var hot = spec().$container.data('handsontable');
   var selected = hot.getSelected();
 
@@ -84,10 +88,10 @@ var contextMenu = function () {
     hot.selectCell(0, 0);
     selected = hot.getSelected();
   }
-
-  var cell = getCell(selected[0], selected[1]);
+  if (!cell) {
+    cell = getCell(selected[0], selected[1]);
+  }
   var cellOffset = $(cell).offset();
-
 
   $(cell).simulate('contextmenu',{
     clientX: cellOffset.left,
@@ -98,6 +102,25 @@ var contextMenu = function () {
 var closeContextMenu = function () {
   $(document).simulate('mousedown');
 //  $(document).trigger('mousedown');
+};
+
+
+/**
+ * Shows dropdown menu
+ */
+var dropdownMenu = function (columnIndex) {
+  var hot = spec().$container.data('handsontable');
+  var th = hot.view.wt.wtTable.getColumnHeader(columnIndex || 0);
+  var button = th.querySelector('.changeType');
+
+  if (button) {
+    $(button).simulate('mousedown');
+    $(button).simulate('click');
+  }
+};
+
+var closeDropdownMenu = function () {
+  $(document).simulate('mousedown');
 };
 
 /**
@@ -147,6 +170,7 @@ var handsontableKeyTriggerFactory = function (type) {
       if (key.indexOf('ctrl+') > -1) {
         key = key.substring(5);
         ev.ctrlKey = true;
+        ev.metaKey = true;
       }
 
       switch (key) {
@@ -194,8 +218,24 @@ var handsontableKeyTriggerFactory = function (type) {
           ev.keyCode = 8;
           break;
 
+        case 'delete':
+          ev.keyCode = 46;
+          break;
+
         case 'space':
           ev.keyCode = 32;
+          break;
+
+        case 'x':
+          ev.keyCode = 88;
+          break;
+
+        case 'c':
+          ev.keyCode = 67;
+          break;
+
+        case 'v':
+          ev.keyCode = 86;
           break;
 
         default:
@@ -331,7 +371,7 @@ var handsontableMethodFactory = function (method) {
     try{
       instance = spec().$container.handsontable('getInstance');
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
 
     if (!instance) {
@@ -358,6 +398,7 @@ var getSelected = handsontableMethodFactory('getSelected');
 var setDataAtCell = handsontableMethodFactory('setDataAtCell');
 var setDataAtRowProp = handsontableMethodFactory('setDataAtRowProp');
 var getCell = handsontableMethodFactory('getCell');
+var getCellsMeta = handsontableMethodFactory('getCellsMeta');
 var getCellMeta = handsontableMethodFactory('getCellMeta');
 var setCellMeta = handsontableMethodFactory('setCellMeta');
 var removeCellMeta = handsontableMethodFactory('removeCellMeta');
@@ -366,10 +407,12 @@ var getCellEditor = handsontableMethodFactory('getCellEditor');
 var getCellValidator = handsontableMethodFactory('getCellValidator');
 var getData = handsontableMethodFactory('getData');
 var getCopyableData = handsontableMethodFactory('getCopyableData');
+var getCopyableText = handsontableMethodFactory('getCopyableText');
 var getDataAtCell = handsontableMethodFactory('getDataAtCell');
 var getDataAtRowProp = handsontableMethodFactory('getDataAtRowProp');
 var getDataAtRow = handsontableMethodFactory('getDataAtRow');
 var getDataAtCol = handsontableMethodFactory('getDataAtCol');
+var getDataType = handsontableMethodFactory('getDataType');
 var getSourceDataAtCol = handsontableMethodFactory('getSourceDataAtCol');
 var getSourceDataAtRow = handsontableMethodFactory('getSourceDataAtRow');
 var getRowHeader = handsontableMethodFactory('getRowHeader');
@@ -411,14 +454,8 @@ function rowHeight($elem, row) {
   if (!TD) {
     throw new Error("Cannot find table row of index '" + row + "'");
   }
-  var height = Handsontable.Dom.outerHeight(TD);
-  if(row == 0) {
-    height = height - 2;
-  }
-  else {
-    height = height - 1;
-  }
-  return height;
+
+  return Handsontable.Dom.outerHeight(TD);
 }
 
 /**
@@ -439,6 +476,30 @@ function getRenderedValue(trIndex, tdIndex) {
  */
 function getRenderedContent(trIndex, tdIndex) {
   return spec().$container.find('tbody tr').eq(trIndex).find('td').eq(tdIndex).children()
+}
+
+/**
+ * Create numerical data values for the table
+ * @param rowCount
+ * @param colCount
+ * @returns {Array}
+ */
+function createNumericData(rowCount, colCount) {
+  rowCount = typeof rowCount === 'number' ? rowCount : 100;
+  colCount = typeof colCount === 'number' ? colCount : 4;
+
+  var rows = []
+    , i
+    , j;
+
+  for (i = 0; i < rowCount; i++) {
+    var row = [];
+    for (j = 0; j < colCount; j++) {
+      row.push((i + 1));
+    }
+    rows.push(row);
+  }
+  return rows;
 }
 
 /**
@@ -489,5 +550,153 @@ function Model(opts) {
 function createAccessorForProperty(name) {
   return function (obj, value) {
     return obj.attr(name, value);
+  };
+}
+
+function resizeColumn(displayedColumnIndex, width) {
+  var $container = spec().$container;
+  var $th = $container.find('thead tr:eq(0) th:eq(' + displayedColumnIndex +')');
+
+  $th.simulate('mouseover');
+
+  var $resizer = $container.find('.manualColumnResizer');
+  var resizerPosition = $resizer.position();
+
+  $resizer.simulate('mousedown',{
+    clientX: resizerPosition.left
+  });
+
+
+  var delta = width - $th.width() - 2;
+  var newPosition = resizerPosition.left + delta;
+  $resizer.simulate('mousemove',
+    {clientX: newPosition}
+  );
+
+  $resizer.simulate('mouseup');
+}
+
+function resizeRow(displayedRowIndex, height) {
+
+  var $container = spec().$container;
+  var $th = $container.find('tbody tr:eq(' + displayedRowIndex + ') th:eq(0)');
+
+  $th.simulate('mouseover');
+
+  var $resizer = $container.find('.manualRowResizer');
+  var resizerPosition = $resizer.position();
+
+  $resizer.simulate('mousedown',{
+    clientY: resizerPosition.top
+  });
+
+  var delta = height - $th.height() - 2;
+
+  if (delta < 0) {
+    delta = 0;
   }
+
+  $resizer.simulate('mousemove',{
+    clientY: resizerPosition.top + delta
+  });
+
+  $resizer.simulate('mouseup');
+}
+
+function moveSecondDisplayedRowBeforeFirstRow(container, secondDisplayedRowIndex) {
+  var $mainContainer = container.parents(".handsontable").not("[class*=clone]").not("[class*=master]").first(),
+    $rowHeaders = container.find('tbody tr th'),
+    $firstRowHeader = $rowHeaders.eq(secondDisplayedRowIndex - 1),
+    $secondRowHeader = $rowHeaders.eq(secondDisplayedRowIndex);
+
+  $secondRowHeader.simulate('mouseover');
+  var $manualRowMover = $mainContainer.find('.manualRowMover');
+
+  if ($manualRowMover.length) {
+    $manualRowMover.simulate('mousedown',{
+      clientY: $manualRowMover[0].getBoundingClientRect().top
+    });
+
+    $manualRowMover.simulate('mousemove',{
+      clientY:$manualRowMover[0].getBoundingClientRect().top - 20
+    });
+
+    $firstRowHeader.simulate('mouseover');
+    $secondRowHeader.simulate('mouseup');
+  }
+}
+
+function moveFirstDisplayedRowAfterSecondRow(container, firstDisplayedRowIndex) {
+  var $mainContainer = container.parents(".handsontable").not("[class*=clone]").not("[class*=master]").first(),
+    $rowHeaders = container.find('tbody tr th'),
+    $firstRowHeader = $rowHeaders.eq(firstDisplayedRowIndex),
+    $secondRowHeader = $rowHeaders.eq(firstDisplayedRowIndex + 1);
+
+  $secondRowHeader.simulate('mouseover');
+  var $manualRowMover = $mainContainer.find('.manualRowMover');
+
+  if($manualRowMover.length) {
+    $manualRowMover.simulate('mousedown',{
+      clientY: $manualRowMover[0].getBoundingClientRect().top
+    });
+
+    $manualRowMover.simulate('mousemove',{
+      clientY:$manualRowMover[0].getBoundingClientRect().top + 20
+    });
+
+    $firstRowHeader.simulate('mouseover');
+    $secondRowHeader.simulate('mouseup');
+  }
+}
+
+function moveSecondDisplayedColumnBeforeFirstColumn(container, secondDisplayedColIndex){
+  var $mainContainer = container.parents(".handsontable").not("[class*=clone]").not("[class*=master]").first();
+  var $colHeaders = container.find('thead tr:eq(0) th');
+  var $firstColHeader = $colHeaders.eq(secondDisplayedColIndex - 1);
+  var $secondColHeader = $colHeaders.eq(secondDisplayedColIndex);
+
+  //Enter the second column header
+  $secondColHeader.simulate('mouseover');
+  var $manualColumnMover = $mainContainer.find('.manualColumnMover');
+
+  //Grab the second column
+  $manualColumnMover.simulate('mousedown',{
+    pageX : $manualColumnMover[0].getBoundingClientRect().left
+  });
+
+  //Drag the second column over the first column
+  $manualColumnMover.simulate('mousemove',{
+    pageX : $manualColumnMover[0].getBoundingClientRect().left - 20
+  });
+
+  $firstColHeader.simulate('mouseover');
+
+  //Drop the second column
+  $secondColHeader.simulate('mouseup');
+}
+
+function moveFirstDisplayedColumnAfterSecondColumn(container, firstDisplayedColIndex){
+  var $mainContainer = container.parents(".handsontable").not("[class*=clone]").not("[class*=master]").first();
+  var $colHeaders = container.find('thead tr:eq(0) th');
+  var $firstColHeader = $colHeaders.eq(firstDisplayedColIndex);
+  var $secondColHeader = $colHeaders.eq(firstDisplayedColIndex + 1);
+
+  //Enter the first column header
+  $firstColHeader.simulate('mouseover');
+  var $manualColumnMover = $mainContainer.find('.manualColumnMover');
+
+  //Grab the first column
+  $manualColumnMover.simulate('mousedown',{
+    pageX:$manualColumnMover[0].getBoundingClientRect().left
+  });
+
+  //Drag the first column over the second column
+  $manualColumnMover.simulate('mousemove',{
+    pageX:$manualColumnMover[0].getBoundingClientRect().left + 20
+  });
+
+  $secondColHeader.simulate('mouseover');
+
+  //Drop the first column
+  $firstColHeader.simulate('mouseup');
 }
